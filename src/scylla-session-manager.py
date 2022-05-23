@@ -1,4 +1,4 @@
-from cassandra import ConsistencyLevel
+from cassandra import AlreadyExists, ConsistencyLevel
 from cassandra.cluster import EXEC_PROFILE_DEFAULT, Cluster, ExecutionProfile
 from cassandra.policies import (DowngradingConsistencyRetryPolicy,
                                 WhiteListRoundRobinPolicy)
@@ -13,48 +13,70 @@ class ScyllaSessionManager:
         self._set_table()
 
     def _set_keyspace(self, keyspace: str):
-        _session = self.cluster.connect()
-        _session.execute(
-            f"CREATE KEYSPACE {keyspace} "
-            "WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy', 'replication_factor' : 3 };"
-        )
+        try:
+            _session = self.cluster.connect()
+            _session.execute(
+                f"CREATE KEYSPACE {keyspace} "
+                "WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy', 'replication_factor' : 3 };"
+            )
+        except AlreadyExists as e:
+            print(f'keyspace {keyspace} already exists')
+            pass
+        except Exception as e:
+            print(type(e), e)
     
-    def _set_table(self):
-        self.session.execute(
-            f"""
-            CREATE TABLE users ( user_id int, fname text, lname text, PRIMARY KEY((user_id)));
-            """
-        )
+    def _set_table(self, table='users'):
+        try:
+            self.session.execute(
+                f"""
+                CREATE TABLE {table} ( user_id int, fname text, lname text, PRIMARY KEY((user_id)));
+                """
+            )
+        except AlreadyExists as e:
+            print(f'table {table} already exists')
+            pass
+        except Exception as e:
+            print(type(e), e)
 
     def create_row(self, user_id: int, fname: str, lname: str):
-        res = self.session.execute(
+        try:
+            res = self.session.execute(
             f"""
             INSERT INTO users (user_id, fname, lname)
             VALUES ({user_id}, '{fname}', '{lname}')
             """
         )
-        print(res)
+        except Exception as e:
+            print(e)
     
     def get_row(self, user_id: int):
-        row = self.session.execute(
-            f"""
-            SELECT * FROM users
-            WHERE user_id = {user_id}
-            """
-        )
+        try:
+            row = self.session.execute(
+                f"""
+                SELECT * FROM users
+                WHERE user_id = {user_id}
+                """
+            )
+        except Exception as e:
+            print(e)
         print(row.one())
-        return 
     
     def delete_row(self, user_id: int):
-        self.session.execute(
-            f"""
-            DELETE FROM users
-            WHERE user_id = {user_id}
-            """
-        )
+        try:
+            self.session.execute(
+                f"""
+                DELETE FROM users
+                WHERE user_id = {user_id}
+                """
+            )
+        except Exception as e:
+            print(e)
 
     def stop(self):
-        self.cluster.shutdown()
+        try:
+            self.cluster.shutdown()
+        except Exception as e:
+            print(e)
 
 
 if __name__ == '__main__':

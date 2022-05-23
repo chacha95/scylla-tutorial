@@ -39,3 +39,8 @@ cql을 입력 할 수 있는 cql shell 접속
 ```bash
 docker exec -it scylla-node1 cqlsh
 ```
+
+# 현재 구조
+
+`scylla-node1`에 port-forward(19092)를 통해 python clinet가 session을 만들어 통신
+RF=3 node=3개인 구조
