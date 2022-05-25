@@ -33,10 +33,10 @@ class AssetModel(Model):
 
 
 if __name__ == '__main__':
-    hosts = [settings.scylla_host]
-    port = settings.scylla_port
-    keyspace = settings.scylla_keyspace
-    
+    hosts = ['127.0.0.1']
+    port= 19042
+    keyspace = 'test'
+
     profile = ExecutionProfile(
         load_balancing_policy=WhiteListRoundRobinPolicy(hosts),
         retry_policy=DowngradingConsistencyRetryPolicy(),
